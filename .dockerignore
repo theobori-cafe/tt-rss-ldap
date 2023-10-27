@@ -1,0 +1,5 @@
+.git/
+cache/
+plugins.local/
+templates.local/
+themes.local/
