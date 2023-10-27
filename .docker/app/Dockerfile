@@ -55,7 +55,7 @@ ARG LDAP_DIR=/tmp/auth-ldap
 
 RUN git clone https://github.com/hydrian/TTRSS-Auth-LDAP.git ${LDAP_DIR} && \
 	mv ${LDAP_DIR}/plugins/auth_ldap ${SRC_DIR}/plugins.local && \
-	rm -f ${LDAP_DIR}
+	rm -rf ${LDAP_DIR}
 
 ENV OWNER_UID=1000
 ENV OWNER_GID=1000
