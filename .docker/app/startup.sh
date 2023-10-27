@@ -74,7 +74,7 @@ chown -R $OWNER_UID:$OWNER_GID $DST_DIR \
 if [ -z "$TTRSS_NO_STARTUP_PLUGIN_UPDATES" ]; then
 	echo updating all local plugins...
 
-	find $DST_DIR/plugins.local -mindepth 1 -maxdepth 1 -type d | while read PLUGIN; do
+	find $DST_DIR/plugins.local -maxdepth 1 -type d | tail -n+2 | while read PLUGIN; do
 		if [ -d $PLUGIN/.git ]; then
 			echo updating $PLUGIN...
 
