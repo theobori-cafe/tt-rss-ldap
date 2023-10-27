@@ -1,0 +1,33 @@
+parameters:
+   level: 6
+   tmpDir: .phpstan-tmp
+   parallel:
+      maximumNumberOfProcesses: 4
+   reportUnmatchedIgnoredErrors: false
+   ignoreErrors:
+      - '#Constant.*\b(SUBSTRING_FOR_DATE|SCHEMA_VERSION|SELF_USER_AGENT|LABEL_BASE_INDEX|PLUGIN_FEED_BASE_INDEX)\b.*not found#'
+      - '#Comparison operation ">" between int<1, max> and 0 is always true.#'
+      - message: '##'
+        paths:
+          - lib/*
+          - vendor/*
+          - plugins/*/vendor/*
+          - plugins.local/*/vendor/*
+   excludePaths:
+      - lib/**/test/*
+      - lib/**/tests/*
+      - lib/dojo-src/*
+      - node_modules/*
+      - plugins.local/**/test/*
+      - plugins.local/**/tests/*
+      - plugins.local/*/vendor/intervention/*
+      - plugins.local/*/vendor/psr/log/*
+      - plugins.local/cache_s3/vendor/*
+      - plugins/**/test/*
+      - plugins/**/Test/*
+      - plugins/**/tests/*
+      - plugins/*/vendor/intervention/*
+      - plugins/*/vendor/psr/log/*
+      - vendor/**/*
+   paths:
+      - .

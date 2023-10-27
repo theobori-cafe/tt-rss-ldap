@@ -11,7 +11,7 @@ Thumbs.db
 /feed-icons/*
 /cache/*/*
 /lock/*
-/.vscode
+/.vscode/settings.json
 /vendor/**/.git
 /.phpunit.result.cache
 /.phpstan-tmp

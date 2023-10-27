@@ -1,0 +1,101 @@
+stages:
+  - lint
+  - build
+  - test
+  - publish
+
+variables:
+  ESLINT_PATHS: js plugins
+
+include:
+  - project: 'ci/ci-templates'
+    ref: master
+    file: .ci-build-docker-kaniko.yml
+  - project: 'ci/ci-templates'
+    ref: master
+    file: .ci-lint-common.yml
+  - project: 'ci/ci-templates'
+    ref: master
+    file: .ci-integration-test.yml
+
+phpunit:
+  extends: .phpunit
+
+eslint:
+  extends: .eslint
+
+phpstan:
+  extends: .phpstan
+
+ttrss-web-nginx:branch:
+  extends: .build-branch
+  variables:
+    DOCKERFILE: ${CI_PROJECT_DIR}/.docker/web-nginx/Dockerfile
+
+ttrss-fpm-pgsql-static:branch:
+   extends: .build-branch
+   variables:
+    DOCKERFILE: ${CI_PROJECT_DIR}/.docker/app/Dockerfile
+
+ttrss-web-nginx:
+  extends: .build-master-commit-only
+  variables:
+    DOCKERFILE: ${CI_PROJECT_DIR}/.docker/web-nginx/Dockerfile
+
+ttrss-fpm-pgsql-static:
+   extends: .build-master-commit-only
+   variables:
+    DOCKERFILE: ${CI_PROJECT_DIR}/.docker/app/Dockerfile
+
+phpdoc:
+  image: ${PHP_IMAGE}
+  stage: publish
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $PHPDOC_DEPLOY_SSH_KEY != null
+  script:
+    - php82 /phpDocumentor.phar -d classes -d include -t phpdoc --visibility=public
+    - mkdir -p ~/.ssh &&
+        cp ${PHPDOC_DEPLOY_SSH_KEY} ~/.ssh/id_ed25519 &&
+        chmod 0600 ~/.ssh/id_ed25519
+    - rsync -av -e 'ssh -o StrictHostKeyChecking=no' phpdoc/ ${PHPDOC_DEPLOY_HOST}:phpdoc/
+
+integration-test:
+  image: ${SELENIUM_IMAGE}
+  variables:
+    TEST_HELM_REPO: https://gitlab.tt-rss.org/tt-rss/helm-charts/tt-rss
+    SELENIUM_GRID_ENDPOINT: http://selenium-hub.selenium-grid.svc.cluster.local:4444/wd/hub
+  extends: .integration-test
+  script:
+    - export K8S_NAMESPACE=$(kubectl get pods -o=custom-columns=NS:.metadata.namespace | tail -1)
+    - python3 tests/integration/selenium_test.py
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+integration-test:branch:
+  extends: integration-test
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_REGISTRY_USER != null
+
+ttrss-web-nginx:publish:
+  stage: publish
+  extends: .build-master
+  variables:
+    DOCKERFILE: ${CI_PROJECT_DIR}/.docker/web-nginx/Dockerfile
+
+ttrss-fpm-pgsql-static:publish:
+  stage: publish
+  extends: .build-master
+  variables:
+    DOCKERFILE: ${CI_PROJECT_DIR}/.docker/app/Dockerfile
+
+update-demo:
+  stage: publish
+  image: ${HELM_IMAGE}
+  variables:
+    HELM_REPO: https://gitlab.tt-rss.org/tt-rss/helm-charts/tt-rss
+  script:
+    - git clone ${HELM_REPO} chart
+    - helm upgrade --atomic --install tt-rss-demo chart --values .helm/values-demo.yaml --set imageTag=${CI_COMMIT_SHORT_SHA}
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_REGISTRY_USER != null && $UPDATE_DEMO == "true"
+
