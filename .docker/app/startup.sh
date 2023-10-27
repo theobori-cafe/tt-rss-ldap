@@ -47,6 +47,10 @@ if [ -z $SKIP_RSYNC_ON_STARTUP ]; then
 		sudo -u app rsync -a --delete \
 			$SRC_DIR/plugins.local/nginx_xaccel \
 			$DST_DIR/plugins.local/nginx_xaccel
+		
+		sudo -u app rsync -a --delete \
+			$SRC_DIR/plugins.local/auth_ldap \
+			$DST_DIR/plugins.local/auth_ldap
 	fi
 else
 	echo "warning: working copy in $DST_DIR won't be updated, make sure you know what you're doing."
